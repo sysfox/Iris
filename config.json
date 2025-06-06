@@ -1,14 +1,21 @@
 {
-  "name": "Teror的照片画廊",
-  "title": "Teror的照片画廊",
-  "description": "记录生活中的美好瞬间",
+  "name": "Teror's Photo Gallery",
+  "title": "Teror's Photo Gallery",
+  "description": "Capturing beautiful moments in life, documenting daily warmth and emotions through my lens.",
   "url": "https://plog.trfox.top",
   "accentColor": "#007bff",
+  "ogImage": {
+    "width": 1200,
+    "height": 630
+  },
   "author": {
     "name": "Teror Fox",
-    "url": "https://www.trfox.top"
+    "url": "https://trfox.top/"
   },
   "social": {
-    "twitter": "@yourusername"
+    "twitter": "@username"
+  },
+  "extra": {
+    "accessRepo": true
   }
 }

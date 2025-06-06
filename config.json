@@ -1,0 +1,14 @@
+{
+  "name": "Teror的照片画廊",
+  "title": "Teror的照片画廊",
+  "description": "记录生活中的美好瞬间",
+  "url": "https://plog.trfox.top",
+  "accentColor": "#007bff",
+  "author": {
+    "name": "Teror Fox",
+    "url": "https://www.trfox.top"
+  },
+  "social": {
+    "github": "@sysfox"
+  }
+}

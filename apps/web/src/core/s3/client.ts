@@ -41,6 +41,20 @@ function createS3Client(): S3Client {
     },
   )
 
+  // 添加中间件以移除 x-amz-checksum-crc32 请求头
+  client.middlewareStack.add(
+    (next) => async (args) => {
+      const request = args.request as { headers?: Record<string, string> }
+      if (request.headers) {
+        delete request.headers['x-amz-checksum-crc32']
+      }
+      return next(args)
+    },
+    {
+      step: 'build',
+    },
+  )
+
   return client
 }
 

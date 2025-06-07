@@ -25,7 +25,23 @@ function createS3Client(): S3Client {
     s3ClientConfig.endpoint = env.S3_ENDPOINT
   }
 
-  return new S3Client(s3ClientConfig)
+  const client = new S3Client(s3ClientConfig)
+
+  // 添加中间件以移除 x-amz-checksum-mode 请求头
+  client.middlewareStack.add(
+    (next) => async (args) => {
+      const request = args.request as { headers?: Record<string, string> }
+      if (request.headers) {
+        delete request.headers['x-amz-checksum-mode']
+      }
+      return next(args)
+    },
+    {
+      step: 'build',
+    },
+  )
+
+  return client
 }
 
 export const s3Client = createS3Client()

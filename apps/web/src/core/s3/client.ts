@@ -27,31 +27,18 @@ function createS3Client(): S3Client {
 
   const client = new S3Client(s3ClientConfig)
 
-  // 添加中间件以移除 x-amz-checksum-mode 请求头
+  // 仅在 finalizeRequest 阶段移除所有 checksum 请求头，简化代码
   client.middlewareStack.add(
     (next) => async (args) => {
       const request = args.request as { headers?: Record<string, string> }
       if (request.headers) {
         delete request.headers['x-amz-checksum-mode']
-      }
-      return next(args)
-    },
-    {
-      step: 'build',
-    },
-  )
-
-  // 添加中间件以移除 x-amz-checksum-crc32 请求头
-  client.middlewareStack.add(
-    (next) => async (args) => {
-      const request = args.request as { headers?: Record<string, string> }
-      if (request.headers) {
         delete request.headers['x-amz-checksum-crc32']
       }
       return next(args)
     },
     {
-      step: 'build',
+      step: 'finalizeRequest',
     },
   )
 

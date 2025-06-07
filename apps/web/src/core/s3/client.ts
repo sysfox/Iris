@@ -14,6 +14,10 @@ function createS3Client(): S3Client {
       accessKeyId: env.S3_ACCESS_KEY_ID,
       secretAccessKey: env.S3_SECRET_ACCESS_KEY,
     },
+    // 禁用 checksum header，解决与 S3 兼容存储的兼容性问题
+    defaultsMode: 'legacy',
+    // 强制使用路径样式的 URL（对于非 AWS 的 S3 兼容存储很重要）
+    forcePathStyle: true,
   }
 
   // 如果提供了自定义端点，则使用它

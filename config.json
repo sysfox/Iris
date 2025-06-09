@@ -1,0 +1,21 @@
+{
+  "name": "Teror Fox's Photo Gallery",
+  "title": "Teror's Photo Gallery",
+  "description": "Capturing beautiful moments in life, documenting daily warmth and emotions through my lens.",
+  "url": "https://plog.trfox.top",
+  "accentColor": "#007bff",
+  "ogImage": {
+    "width": 1200,
+    "height": 630
+  },
+  "author": {
+    "name": "Teror Fox",
+    "url": "https://blog.trfox.top/"
+  },
+  "social": {
+    "twitter": "@__oQuery"
+  },
+  "extra": {
+    "accessRepo": true
+  }
+}

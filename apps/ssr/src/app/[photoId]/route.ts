@@ -1,5 +1,5 @@
-import { photoLoader } from '@photo-gallery/data'
-import type { PhotoManifest } from '@photo-gallery/data/types'
+import { photoLoader } from '@afilmory/data'
+import type { PhotoManifest } from '@afilmory/data/types'
 import { DOMParser } from 'linkedom'
 import type { NextRequest } from 'next/server'
 
@@ -20,7 +20,10 @@ export const GET = async (
 
   const photo = photoLoader.getPhoto(photoId)
   if (!photo) {
-    return new Response('Photo not found', { status: 404 })
+    return new Response(indexHtml, {
+      headers: { 'Content-Type': 'text/html' },
+      status: 404,
+    })
   }
 
   try {
@@ -54,6 +57,7 @@ export const GET = async (
 
     return new Response(indexHtml, {
       headers: { 'Content-Type': 'text/html' },
+      status: 500,
     })
   }
 }
@@ -64,12 +68,25 @@ const createAndInsertOpenGraphMeta = (
   request: NextRequest,
 ) => {
   // Open Graph meta tags
+
+  // X forward host
+  const xForwardedHeaders = {
+    'x-forwarded-host': request.headers.get('x-forwarded-host'),
+    'x-forwarded-proto': request.headers.get('x-forwarded-proto'),
+    'x-forwarded-for': request.headers.get('x-forwarded-for'),
+  }
+
+  let realOrigin = request.nextUrl.origin
+  if (xForwardedHeaders['x-forwarded-host']) {
+    realOrigin = `${xForwardedHeaders['x-forwarded-proto'] || 'https'}://${xForwardedHeaders['x-forwarded-host']}`
+  }
+
   const ogTags = {
     'og:type': 'website',
     'og:title': photo.id,
     'og:description': photo.description || '',
-    'og:image': `${request.nextUrl.origin}/og/${photo.id}`,
-    'og:url': `${request.nextUrl.origin}/${photo.id}`,
+    'og:image': `${realOrigin}/og/${photo.id}`,
+    'og:url': `${realOrigin}/${photo.id}`,
   }
 
   for (const [property, content] of Object.entries(ogTags)) {
@@ -84,7 +101,7 @@ const createAndInsertOpenGraphMeta = (
     'twitter:card': 'summary_large_image',
     'twitter:title': photo.id,
     'twitter:description': photo.description || '',
-    'twitter:image': `${request.nextUrl.origin}/og/${photo.id}`,
+    'twitter:image': `${realOrigin}/og/${photo.id}`,
   }
 
   for (const [name, content] of Object.entries(twitterTags)) {

@@ -12,6 +12,13 @@ async function getLatestPhotos(count = 4) {
 
   // 按拍摄时间排序，获取最新的照片
   const sortedPhotos = photos.sort((a, b) => {
+    if (
+      !a?.exif?.Photo?.DateTimeOriginal ||
+      !b?.exif?.Photo?.DateTimeOriginal
+    ) {
+      return 0
+    }
+
     const aDate =
       (a.exif.Photo?.DateTimeOriginal as unknown as string) || a.lastModified
     const bDate =
@@ -380,16 +387,4 @@ export async function generateOGImage(options: OGImageOptions) {
     console.error('❌ Error generating OG image:', error)
     throw error
   }
-}
-
-// 如果直接运行此脚本
-if (import.meta.url === `file://${process.argv[1]}`) {
-  const timestamp = Date.now()
-  generateOGImage({
-    title: 'Photo Gallery',
-    description: 'Beautiful photo collection and gallery',
-    outputPath: `og-image-${timestamp}.png`,
-    includePhotos: true,
-    photoCount: 4,
-  }).catch(console.error)
 }

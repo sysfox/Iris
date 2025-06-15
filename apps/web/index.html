@@ -6,8 +6,19 @@
       name="viewport"
       content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
     />
-    <meta name="description" content="{{DESCRIPTION}}" />
-    <title>{{TITLE}}</title>
+    <meta name="description" content="<%- description %>" />
+    <title><%- title %></title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Geist:wght@100..900&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      html {
+        font-family: 'Geist', ui-sans-serif, system-ui, sans-serif;
+      }
+    </style>
   </head>
   <body>
     <div id="root">
@@ -193,7 +204,7 @@
                 animation: titleSlide 1s ease-out;
               "
             >
-              {{TITLE}}
+              <%- title %>
             </h1>
             <div
               style="
@@ -220,7 +231,7 @@
                 opacity: 0;
               "
             >
-              {{DESCRIPTION}}
+              <%- description %>
             </p>
           </div>
 
@@ -260,20 +271,6 @@
                 "
               ></div>
             </div>
-
-            <!-- 加载文字 -->
-            <p
-              style="
-                color: #666;
-                font-size: 0.8rem;
-                margin: 0;
-                font-weight: 500;
-                letter-spacing: 0.05em;
-                animation: loadingText 2s ease-in-out infinite;
-              "
-            >
-              LOADING
-            </p>
           </div>
         </div>
 

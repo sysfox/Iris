@@ -6,6 +6,7 @@ import sharp from 'sharp'
 
 import { HEIC_FORMATS } from '../constants/index.js'
 import { extractExifData } from '../image/exif.js'
+import { calculateHistogramAndAnalyzeTone } from '../image/histogram.js'
 import {
   convertBmpToJpegSharpInstance,
   getImageMetadataWithSharp,
@@ -17,8 +18,9 @@ import {
   thumbnailExists,
 } from '../image/thumbnail.js'
 import type { Logger } from '../logger/index.js'
+import { logger } from '../logger/index.js'
 import { needsUpdate } from '../manifest/manager.js'
-import { generateS3Url, getImageFromS3 } from '../s3/operations.js'
+import { defaultStorageManager } from '../storage/manager.js'
 import type {
   PhotoManifestItem,
   PickedExif,
@@ -38,6 +40,7 @@ export interface WorkerLoggers {
   thumbnail: Logger['thumbnail']
   blurhash: Logger['blurhash']
   exif: Logger['exif']
+  tone: Logger['image'] // 影调分析使用 image logger
 }
 
 // 处理单张照片
@@ -49,7 +52,6 @@ export async function processPhoto(
   existingManifestMap: Map<string, PhotoManifestItem>,
   livePhotoMap: Map<string, _Object>,
   options: PhotoProcessorOptions,
-  logger: Logger,
 ): Promise<ProcessPhotoResult> {
   const key = obj.Key
   if (!key) {
@@ -67,6 +69,7 @@ export async function processPhoto(
     thumbnail: logger.worker(workerId).withTag('THUMBNAIL'),
     blurhash: logger.worker(workerId).withTag('BLURHASH'),
     exif: logger.worker(workerId).withTag('EXIF'),
+    tone: logger.worker(workerId).withTag('TONE'),
   }
 
   workerLoggers.image.info(`📸 [${index + 1}/${totalImages}] ${key}`)
@@ -104,7 +107,8 @@ export async function processPhoto(
 
   try {
     // 获取图片数据
-    const rawImageBuffer = await getImageFromS3(key, workerLoggers.s3)
+    const rawImageBuffer = await defaultStorageManager.getFile(key)
+
     if (!rawImageBuffer) return { item: null, type: 'failed' }
 
     // 预处理图片（处理 HEIC/HEIF 格式）
@@ -219,6 +223,22 @@ export async function processPhoto(
       )
     }
 
+    // 计算影调分析
+    let toneAnalysis: import('../types/photo.js').ToneAnalysis | null = null
+    if (
+      !options.isForceMode &&
+      !options.isForceManifest &&
+      existingItem?.toneAnalysis
+    ) {
+      toneAnalysis = existingItem.toneAnalysis
+      workerLoggers.tone.info(`复用现有影调分析：${photoId}`)
+    } else {
+      toneAnalysis = await calculateHistogramAndAnalyzeTone(
+        sharpInstance,
+        workerLoggers.tone,
+      )
+    }
+
     // 提取照片信息（在获取 EXIF 数据之后，以便使用 DateTimeOriginal）
     const photoInfo = extractPhotoInfo(key, exifData, workerLoggers.image)
 
@@ -232,7 +252,9 @@ export async function processPhoto(
 
     if (isLivePhoto && livePhotoVideo?.Key) {
       livePhotoVideoS3Key = livePhotoVideo.Key
-      livePhotoVideoUrl = generateS3Url(livePhotoVideo.Key)
+      livePhotoVideoUrl = defaultStorageManager.generatePublicUrl(
+        livePhotoVideo.Key,
+      )
       workerLoggers.image.info(
         `📱 检测到 Live Photo：${key} -> ${livePhotoVideo.Key}`,
       )
@@ -245,7 +267,7 @@ export async function processPhoto(
       dateTaken: photoInfo.dateTaken,
       views: photoInfo.views,
       tags: photoInfo.tags,
-      originalUrl: generateS3Url(key),
+      originalUrl: defaultStorageManager.generatePublicUrl(key),
       thumbnailUrl,
       blurhash,
       width: metadata.width,
@@ -255,6 +277,7 @@ export async function processPhoto(
       lastModified: obj.LastModified?.toISOString() || new Date().toISOString(),
       size: obj.Size || 0,
       exif: exifData,
+      toneAnalysis,
       // Live Photo 相关字段
       isLivePhoto,
       livePhotoVideoUrl,

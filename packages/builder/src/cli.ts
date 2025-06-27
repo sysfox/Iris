@@ -1,3 +1,6 @@
+import 'dotenv-expand/config'
+
+import { execSync } from 'node:child_process'
 import cluster from 'node:cluster'
 import { existsSync } from 'node:fs'
 import path from 'node:path'
@@ -48,7 +51,7 @@ async function main() {
       cwd: workdir,
       stdio: 'inherit',
     })`ln -s ${path.resolve(workdir, 'assets-git', 'thumbnails')} ${thumbnailsDir}`
-    // 删除src/data/photos-manifest.json，并建立软连接到 assets-git/photos-manifest.json
+    // 删除 src/data/photos-manifest.json，并建立软连接到 assets-git/photos-manifest.json
     const photosManifestPath = path.resolve(
       workdir,
       'src',
@@ -162,6 +165,8 @@ async function main() {
   logger.main.info(`🔧 处理模式：${processingMode}`)
   logger.main.info(`🏗️ 使用构建器：PhotoGalleryBuilder (适配器模式)`)
 
+  environmentCheck()
+
   // 启动构建过程
   await defaultBuilder.buildManifest({
     isForceMode,
@@ -178,3 +183,16 @@ main().catch((error) => {
   logger.main.error('构建失败：', error)
   throw error
 })
+
+function environmentCheck() {
+  try {
+    execSync('perl -v', { stdio: 'ignore' })
+
+    logger.main.info('Perl 已安装')
+  } catch (err) {
+    console.error(err)
+    logger.main.error('Perl 未安装，请安装 Perl 并重新运行')
+    // eslint-disable-next-line unicorn/no-process-exit
+    process.exit(1)
+  }
+}

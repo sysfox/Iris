@@ -1,6 +1,7 @@
 import { execSync } from 'node:child_process'
 import { rmSync } from 'node:fs'
 import path from 'node:path'
+import { fileURLToPath } from 'node:url'
 
 import tailwindcss from '@tailwindcss/vite'
 import react from '@vitejs/plugin-react'
@@ -12,11 +13,15 @@ import { createHtmlPlugin } from 'vite-plugin-html'
 import tsconfigPaths from 'vite-tsconfig-paths'
 
 import PKG from '../../package.json'
-import { ogImagePlugin } from '../../plugins/og-image-plugin'
-import { createDependencyChunksPlugin } from '../../plugins/vite/deps'
-import { createFeedSitemapPlugin } from '../../plugins/vite/feed-sitemap'
-import { localesJsonPlugin } from '../../plugins/vite/locales-json'
 import { siteConfig } from '../../site.config'
+import { astPlugin } from './plugins/vite/ast'
+import { createDependencyChunksPlugin } from './plugins/vite/deps'
+import { createFeedSitemapPlugin } from './plugins/vite/feed-sitemap'
+import { localesJsonPlugin } from './plugins/vite/locales-json'
+import { manifestInjectPlugin } from './plugins/vite/manifest-inject'
+import { ogImagePlugin } from './plugins/vite/og-image-plugin'
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
 if (process.env.CI) {
   rmSync(path.join(process.cwd(), 'src/pages/(debug)'), {
@@ -24,6 +29,7 @@ if (process.env.CI) {
     force: true,
   })
 }
+const DEV_NEXT_JS = process.env.DEV_NEXT_JS === 'true'
 
 const ReactCompilerConfig = {
   /* ... */
@@ -38,10 +44,12 @@ export default defineConfig({
       },
     }),
 
+    astPlugin,
     tsconfigPaths(),
     checker({
       typescript: true,
       enableBuild: true,
+      root: __dirname,
     }),
     codeInspectorPlugin({
       bundler: 'vite',
@@ -53,6 +61,7 @@ export default defineConfig({
       ['i18next', 'i18next-browser-languagedetector', 'react-i18next'],
     ]),
     localesJsonPlugin(),
+    manifestInjectPlugin(),
     tailwindcss(),
     ogImagePlugin({
       title: siteConfig.title,
@@ -82,6 +91,9 @@ export default defineConfig({
     }),
     process.env.analyzer && analyzer(),
   ],
+  server: {
+    port: !DEV_NEXT_JS ? 1924 : 3000, // 1924 年首款 35mm 相机问世
+  },
   define: {
     APP_DEV_CWD: JSON.stringify(process.cwd()),
     APP_NAME: JSON.stringify(PKG.name),

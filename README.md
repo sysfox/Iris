@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="https://github.com/Afilmory/assets/blob/main/512-mac.png?raw=true" alt="Afilmory" width="256px" />
+  <img src="https://github.com/Afilmory/assets/blob/main/afilmory-readme.webp?raw=true" alt="Afilmory" width="100%" />
 </p>
 
 # <p align="center">Afilmory</p>
@@ -10,9 +10,12 @@ A modern photo gallery website built with React + TypeScript, supporting automat
 
 Live Photo Galleries:
 
-- https://gallery.innei.in
+- https://afilmory.innei.in
 - https://gallery.mxte.cc
 - https://photography.pseudoyu.com
+- https://afilmory.magren.cc
+
+[简体中文](./README.zh.md)
 
 ## 🌟 Features
 
@@ -23,7 +26,7 @@ Live Photo Galleries:
 - 🎨 **Modern UI Design** - Built with Tailwind CSS and Radix UI component library
 - ⚡ **Incremental Sync** - Smart change detection, processes only new or modified photos
 - 🌐 **i18n** - Multi-language support
-- 🌐 **OpenGraph** - OpenGraph metadata for social media sharing
+- 🔗 **OpenGraph** - OpenGraph metadata for social media sharing
 
 ### Image Processing
 
@@ -37,7 +40,7 @@ Live Photo Galleries:
 
 - 🎛️ **Fujifilm Simulation** - Read and display Fujifilm camera film simulation settings
 - 🔍 **Fullscreen Viewer** - Image viewer with gesture support
-- 🏷️ **Smart Tags** - Auto-generated tags based on EXIF data
+- 🏷️ **File System Tags** - Auto-generated tags based on file system
 - ⚡ **Concurrent Processing** - Multi-process/multi-thread concurrent processing support
 - 🗂️ **Multi-Storage Support** - S3, GitHub, and other storage backends
 
@@ -174,7 +177,8 @@ Create `builder.config.json` file for advanced configuration:
     "bucket": "my-photos",
     "region": "us-east-1",
     "prefix": "photos/",
-    "customDomain": "https://cdn.example.com"
+    "customDomain": "https://cdn.example.com",
+    "endpoint": "https://s3.amazonaws.com"
   },
   "options": {
     "defaultConcurrency": 8,

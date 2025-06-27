@@ -5,6 +5,7 @@ import 'swiper/css/navigation'
 
 import { AnimatePresence, m } from 'motion/react'
 import {
+  Fragment,
   Suspense,
   useCallback,
   useEffect,
@@ -19,6 +20,7 @@ import { Keyboard, Navigation, Virtual } from 'swiper/modules'
 import { Swiper, SwiperSlide } from 'swiper/react'
 
 import { PassiveFragment } from '~/components/common/PassiveFragmenet'
+import { injectConfig } from '~/config'
 import { useMobile } from '~/hooks/useMobile'
 import { Spring } from '~/lib/spring'
 import type { PhotoManifest } from '~/types/photo'
@@ -26,6 +28,7 @@ import type { PhotoManifest } from '~/types/photo'
 import { ExifPanel } from './ExifPanel'
 import { GalleryThumbnail } from './GalleryThumbnail'
 import { ProgressiveImage } from './ProgressiveImage'
+import { ReactionButton } from './Reaction'
 import { SharePanel } from './SharePanel'
 
 interface PhotoViewerProps {
@@ -237,6 +240,12 @@ export const PhotoViewer = ({
                     </div>
                   </m.div>
 
+                  {!isMobile && injectConfig.useApi && (
+                    <ReactionButton
+                      photoId={currentPhoto.id}
+                      className="absolute right-4 bottom-4"
+                    />
+                  )}
                   {/* Swiper 容器 */}
                   <Swiper
                     modules={[Navigation, Keyboard, Virtual]}
@@ -313,27 +322,28 @@ export const PhotoViewer = ({
                   </Swiper>
 
                   {/* 自定义导航按钮 */}
-                  {currentIndex > 0 && (
-                    <button
-                      type="button"
-                      className={`swiper-button-prev-custom absolute ${isMobile ? 'left-2' : 'left-4'} top-1/2 z-20 flex -translate-y-1/2 items-center justify-center ${isMobile ? 'size-8' : 'size-10'} bg-material-medium rounded-full text-white opacity-0 backdrop-blur-sm duration-200 group-hover:opacity-100 hover:bg-black/40`}
-                      onClick={handlePrevious}
-                    >
-                      <i
-                        className={`i-mingcute-left-line ${isMobile ? 'text-lg' : 'text-xl'}`}
-                      />
-                    </button>
-                  )}
 
-                  {currentIndex < photos.length - 1 && (
-                    <button
-                      type="button"
-                      className={`swiper-button-next-custom absolute ${isMobile ? 'right-2' : 'right-4'} top-1/2 z-20 flex -translate-y-1/2 items-center justify-center ${isMobile ? 'size-8' : 'size-10'} bg-material-medium rounded-full text-white opacity-0 backdrop-blur-sm duration-200 group-hover:opacity-100 hover:bg-black/40`}
-                    >
-                      <i
-                        className={`i-mingcute-right-line ${isMobile ? 'text-lg' : 'text-xl'}`}
-                      />
-                    </button>
+                  {!isMobile && (
+                    <Fragment>
+                      {currentIndex > 0 && (
+                        <button
+                          type="button"
+                          className={`swiper-button-prev-custom bg-material-medium absolute top-1/2 left-4 z-20 flex size-8 -translate-y-1/2 items-center justify-center rounded-full text-white opacity-0 backdrop-blur-sm duration-200 group-hover:opacity-100 hover:bg-black/40`}
+                          onClick={handlePrevious}
+                        >
+                          <i className={`i-mingcute-left-line text-xl`} />
+                        </button>
+                      )}
+
+                      {currentIndex < photos.length - 1 && (
+                        <button
+                          type="button"
+                          className={`swiper-button-next-custom bg-material-medium absolute top-1/2 right-4 z-20 flex size-8 -translate-y-1/2 items-center justify-center rounded-full text-white opacity-0 backdrop-blur-sm duration-200 group-hover:opacity-100 hover:bg-black/40`}
+                        >
+                          <i className={`i-mingcute-right-line text-xl`} />
+                        </button>
+                      )}
+                    </Fragment>
                   )}
                 </div>
 

@@ -1,4 +1,4 @@
-import { WebGLImageViewer } from '@afilmory/webgl-viewer'
+import { LoadingState, WebGLImageViewer } from '@afilmory/webgl-viewer'
 import { AnimatePresence, m } from 'motion/react'
 import {
   startTransition,
@@ -24,6 +24,7 @@ import { LivePhoto } from './LivePhoto'
 import type { LoadingIndicatorRef } from './LoadingIndicator'
 import { LoadingIndicator } from './LoadingIndicator'
 
+const SHOW_SCALE_INDICATOR_DURATION = 1000
 interface ProgressiveImageProps {
   src: string
   thumbnailSrc?: string
@@ -159,7 +160,7 @@ export const ProgressiveImage = ({
       // 设置新的定时器，500ms 后隐藏提示
       scaleIndicatorTimeoutRef.current = setTimeout(() => {
         setShowScaleIndicator(false)
-      }, 500)
+      }, SHOW_SCALE_INDICATOR_DURATION)
 
       onZoomChange?.(isZoomed)
     },
@@ -169,9 +170,17 @@ export const ProgressiveImage = ({
   const handleWebGLLoadingStateChange = useCallback(
     (
       isLoading: boolean,
-      message?: string,
+      state?: LoadingState,
       quality?: 'high' | 'medium' | 'low' | 'unknown',
     ) => {
+      let message = ''
+
+      if (state === LoadingState.CREATE_TEXTURE) {
+        message = t('photo.webgl.creatingTexture')
+      } else if (state === LoadingState.IMAGE_LOADING) {
+        message = t('photo.webgl.loadingImage')
+      }
+
       loadingIndicatorRef.current?.updateLoadingState({
         isVisible: isLoading,
         isWebGLLoading: isLoading,
@@ -179,7 +188,7 @@ export const ProgressiveImage = ({
         webglQuality: quality,
       })
     },
-    [],
+    [t],
   )
 
   const [isThumbnailLoaded, setIsThumbnailLoaded] = useState(false)
@@ -371,7 +380,7 @@ export const ProgressiveImage = ({
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 10 }}
-            className="pointer-events-none absolute bottom-4 left-4 z-20 flex items-center gap-0.5 rounded bg-black/50 px-3 py-1 text-lg text-white"
+            className="pointer-events-none absolute bottom-4 left-4 z-20 flex items-center gap-0.5 rounded bg-black/50 px-3 py-1 text-lg text-white tabular-nums"
           >
             <SlidingNumber number={currentScale} decimalPlaces={1} />x
           </m.div>

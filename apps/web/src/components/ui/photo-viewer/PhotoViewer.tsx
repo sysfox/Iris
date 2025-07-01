@@ -13,7 +13,7 @@ import {
   useRef,
   useState,
 } from 'react'
-import { Blurhash } from 'react-blurhash'
+import { ErrorBoundary } from 'react-error-boundary'
 import { useTranslation } from 'react-i18next'
 import type { Swiper as SwiperType } from 'swiper'
 import { Keyboard, Navigation, Virtual } from 'swiper/modules'
@@ -25,8 +25,11 @@ import { useMobile } from '~/hooks/useMobile'
 import { Spring } from '~/lib/spring'
 import type { PhotoManifest } from '~/types/photo'
 
+import { Thumbhash } from '../thumbhash'
 import { ExifPanel } from './ExifPanel'
 import { GalleryThumbnail } from './GalleryThumbnail'
+import type { LoadingIndicatorRef } from './LoadingIndicator'
+import { LoadingIndicator } from './LoadingIndicator'
 import { ProgressiveImage } from './ProgressiveImage'
 import { ReactionButton } from './Reaction'
 import { SharePanel } from './SharePanel'
@@ -99,6 +102,7 @@ export const PhotoViewer = ({
     }
   }, [isImageZoomed])
 
+  const loadingIndicatorRef = useRef<LoadingIndicatorRef>(null)
   // 处理图片缩放状态变化
   const handleZoomChange = useCallback((isZoomed: boolean) => {
     setIsImageZoomed(isZoomed)
@@ -139,8 +143,6 @@ export const PhotoViewer = ({
     }
   }, [isOpen, handlePrevious, handleNext, onClose, showExifPanel])
 
-  // const imageSize = getImageDisplaySize() // 已改为直接使用原始尺寸优化 WebGL 加载
-
   if (!currentPhoto) return null
 
   return (
@@ -148,34 +150,31 @@ export const PhotoViewer = ({
       {/* 固定背景层防止透出 */}
       {/* 交叉溶解的 Blurhash 背景 */}
       <AnimatePresence mode="popLayout">
-        {isOpen && (
-          <PassiveFragment>
-            <m.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={Spring.presets.smooth}
-              className="bg-material-opaque fixed inset-0"
-            />
-            <m.div
-              key={currentPhoto.blurhash}
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={Spring.presets.smooth}
-              className="fixed inset-0"
-            >
-              <Blurhash
-                hash={currentPhoto.blurhash}
-                width="100%"
-                height="100%"
-                resolutionX={32}
-                resolutionY={32}
-                punch={1}
-                className="size-fill"
+        {isOpen && currentPhoto.thumbHash && (
+          <ErrorBoundary fallback={null}>
+            <PassiveFragment>
+              <m.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={Spring.presets.smooth}
+                className="bg-material-opaque fixed inset-0"
               />
-            </m.div>
-          </PassiveFragment>
+              <m.div
+                key={currentPhoto.id}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={Spring.presets.smooth}
+                className="fixed inset-0"
+              >
+                <Thumbhash
+                  thumbHash={currentPhoto.thumbHash}
+                  className="size-fill"
+                />
+              </m.div>
+            </PassiveFragment>
+          </ErrorBoundary>
         )}
       </AnimatePresence>
       <AnimatePresence>
@@ -246,6 +245,9 @@ export const PhotoViewer = ({
                       className="absolute right-4 bottom-4"
                     />
                   )}
+
+                  {/* 加载指示器 */}
+                  <LoadingIndicator ref={loadingIndicatorRef} />
                   {/* Swiper 容器 */}
                   <Swiper
                     modules={[Navigation, Keyboard, Virtual]}
@@ -288,6 +290,7 @@ export const PhotoViewer = ({
                             className="relative flex h-full w-full items-center justify-center"
                           >
                             <ProgressiveImage
+                              loadingIndicatorRef={loadingIndicatorRef}
                               isCurrentImage={isCurrentImage}
                               src={photo.originalUrl}
                               thumbnailSrc={photo.thumbnailUrl}

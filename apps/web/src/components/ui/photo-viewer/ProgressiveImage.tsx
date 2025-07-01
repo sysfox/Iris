@@ -16,13 +16,14 @@ import {
   useShowContextMenu,
 } from '~/atoms/context-menu'
 import { clsxm } from '~/lib/cn'
+import { isMobileDevice } from '~/lib/device-viewport'
 import { canUseWebGL } from '~/lib/feature'
 import { ImageLoaderManager } from '~/lib/image-loader-manager'
 
 import { SlidingNumber } from '../number/SlidingNumber'
+import type { LivePhotoHandle } from './LivePhoto'
 import { LivePhoto } from './LivePhoto'
 import type { LoadingIndicatorRef } from './LoadingIndicator'
-import { LoadingIndicator } from './LoadingIndicator'
 
 const SHOW_SCALE_INDICATOR_DURATION = 1000
 interface ProgressiveImageProps {
@@ -48,6 +49,8 @@ interface ProgressiveImageProps {
   // Live Photo 相关 props
   isLivePhoto?: boolean
   livePhotoVideoUrl?: string
+
+  loadingIndicatorRef: React.RefObject<LoadingIndicatorRef | null>
 }
 
 export const ProgressiveImage = ({
@@ -71,6 +74,7 @@ export const ProgressiveImage = ({
   // Live Photo props
   isLivePhoto = false,
   livePhotoVideoUrl,
+  loadingIndicatorRef,
 }: ProgressiveImageProps) => {
   const { t } = useTranslation()
   const [blobSrc, setBlobSrc] = useState<string | null>(null)
@@ -86,8 +90,10 @@ export const ProgressiveImage = ({
   const [showScaleIndicator, setShowScaleIndicator] = useState(false)
   const scaleIndicatorTimeoutRef = useRef<NodeJS.Timeout | null>(null)
 
-  const loadingIndicatorRef = useRef<LoadingIndicatorRef>(null)
   const imageLoaderManagerRef = useRef<ImageLoaderManager | null>(null)
+  const livePhotoRef = useRef<LivePhotoHandle>(null)
+  const longPressTimerRef = useRef<NodeJS.Timeout | null>(null)
+  const [isLivePhotoPlaying, setIsLivePhotoPlaying] = useState(false)
 
   useEffect(() => {
     if (highResLoaded || error || !isCurrentImage) return
@@ -157,7 +163,6 @@ export const ProgressiveImage = ({
         clearTimeout(scaleIndicatorTimeoutRef.current)
       }
 
-      // 设置新的定时器，500ms 后隐藏提示
       scaleIndicatorTimeoutRef.current = setTimeout(() => {
         setShowScaleIndicator(false)
       }, SHOW_SCALE_INDICATOR_DURATION)
@@ -166,6 +171,32 @@ export const ProgressiveImage = ({
     },
     [onZoomChange],
   )
+
+  const handleLongPressStart = useCallback(() => {
+    if (!isMobileDevice) return
+    const playVideo = () => livePhotoRef.current?.play()
+    if (
+      !isLivePhoto ||
+      !livePhotoRef.current?.getIsVideoLoaded() ||
+      isLivePhotoPlaying
+    ) {
+      return
+    }
+    if (longPressTimerRef.current) {
+      clearTimeout(longPressTimerRef.current)
+    }
+    longPressTimerRef.current = setTimeout(playVideo, 200)
+  }, [isLivePhoto, isLivePhotoPlaying])
+
+  const handleLongPressEnd = useCallback(() => {
+    if (!isMobileDevice) return
+    if (longPressTimerRef.current) {
+      clearTimeout(longPressTimerRef.current)
+    }
+    if (isLivePhotoPlaying) {
+      livePhotoRef.current?.stop()
+    }
+  }, [isLivePhotoPlaying])
 
   const handleWebGLLoadingStateChange = useCallback(
     (
@@ -216,7 +247,14 @@ export const ProgressiveImage = ({
   }
 
   return (
-    <div className={clsxm('relative overflow-hidden', className)}>
+    <div
+      className={clsxm('relative overflow-hidden', className)}
+      onMouseDown={handleLongPressStart}
+      onMouseUp={handleLongPressEnd}
+      onMouseLeave={handleLongPressEnd}
+      onTouchStart={handleLongPressStart}
+      onTouchEnd={handleLongPressEnd}
+    >
       {/* 缩略图 */}
       {thumbnailSrc && !isHighResImageRendered && (
         <img
@@ -346,10 +384,12 @@ export const ProgressiveImage = ({
         isCurrentImage &&
         imageLoaderManagerRef.current && (
           <LivePhoto
+            ref={livePhotoRef}
             videoUrl={livePhotoVideoUrl}
             imageLoaderManager={imageLoaderManagerRef.current}
             loadingIndicatorRef={loadingIndicatorRef}
             isCurrentImage={isCurrentImage}
+            onPlayingChange={setIsLivePhotoPlaying}
           />
         )}
 
@@ -362,9 +402,6 @@ export const ProgressiveImage = ({
           </span>
         </div>
       )}
-
-      {/* 加载指示器 */}
-      <LoadingIndicator ref={loadingIndicatorRef} />
 
       {/* 操作提示 */}
       {!isLivePhoto && (

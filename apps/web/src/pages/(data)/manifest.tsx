@@ -192,7 +192,7 @@ export const Component = () => {
 
   const photos = photoLoader.getPhotos()
   const manifestData = {
-    version: 'v2',
+    version: 'v5',
     data: photos,
   }
 
@@ -355,7 +355,7 @@ export const Component = () => {
                     <JsonHighlight
                       data={
                         searchTerm
-                          ? { version: 'v2', data: filteredPhotos }
+                          ? { version: 'v5', data: filteredPhotos }
                           : manifestData
                       }
                     />
